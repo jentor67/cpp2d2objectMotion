@@ -21,7 +21,7 @@ struct StellarObject
 class compute_values
 {
   public:
-    double pi = 3.1459, Gc = 6.674083E-11; 
+    double pi = 3.1459, Gc = 6.674083E-11, moon_earth = 384399000; 
 
 
     double gravity_AB(StellarObject Objects[], int m, int n) 
@@ -33,6 +33,15 @@ class compute_values
       
       return(g);
     };
+    
+    double radius(double x1, double y1, double x2, double y2)
+    {
+      double r;
+      r = pow( ( pow( ( x1 - x2 ), 2) + pow( ( y1 - y2 ), 2)  ), 0.5 );
+     
+      return(r);
+    };
+
 
     void sumForces(StellarObject Objects[], int size, int p)
     {
@@ -74,7 +83,7 @@ class read_file
       int i, j;
       string line, object1, value, token, delimiter=",", name1;
       double m1, x1, y1, u1, v1;
-      ifstream in ("data1.txt", ios_base::in);
+      ifstream in ("data2-8.txt", ios_base::in);
     
       i = 0;
       j = 0;
@@ -107,8 +116,9 @@ class read_file
 
 int main(void)
 {
-  int i, j, numberOfObjects=5, secondsLimit = 31558000;
+  int i, j, k, numberOfObjects=5, secondsLimit = 60000000;
   int dummy1, dummy2;
+  double g, r, r1, r2, rmin, radiusLimit = 0.309938E8;
   compute_values computeValues; // computeValues is an object
   read_file readFile; //readFile is an object
   StellarObject StellarObjectArray[numberOfObjects];
@@ -117,7 +127,7 @@ int main(void)
   readFile.readDataFile(StellarObjectArray, size);
 
   ofstream out;
-  out.open ("/home/john/temp/2d2Object_output.txt");
+  out.open ("/home/john/temp/2d2Object_cpp_output2-8em.txt");
   
   i = 0;
   while( i < numberOfObjects )
@@ -134,16 +144,56 @@ int main(void)
   while( i <= secondsLimit )
   {
     j=0;
-    if( i % 1000000 == 0) out << i << ' ' << StellarObjectArray[0].x << ' ' << StellarObjectArray[0].y << " * "
-    << StellarObjectArray[1].x << ' ' << StellarObjectArray[1].y << " * "
-    << StellarObjectArray[2].x << ' ' << StellarObjectArray[2].y << ' '
-    << StellarObjectArray[3].x << ' ' << StellarObjectArray[3].y << '\n';
+    r = computeValues.radius(StellarObjectArray[1].x, StellarObjectArray[1].y, 
+       StellarObjectArray[4].x, StellarObjectArray[4].y);
+    if( i % 100 == 0 && r < computeValues.moon_earth)
+    { 
+      r = computeValues.radius(StellarObjectArray[0].x, StellarObjectArray[0].y, 
+         StellarObjectArray[1].x, StellarObjectArray[1].y);
+      r1 = computeValues.radius(StellarObjectArray[0].x, StellarObjectArray[0].y, 
+         StellarObjectArray[4].x, StellarObjectArray[4].y);
+      r2 = computeValues.radius(StellarObjectArray[1].x, StellarObjectArray[1].y, 
+         StellarObjectArray[4].x, StellarObjectArray[4].y);
+      out << i << ' ' << StellarObjectArray[0].x << ' ' << StellarObjectArray[0].y << ' '
+      << StellarObjectArray[1].x << ' ' << StellarObjectArray[1].y << ' '
+      << StellarObjectArray[2].x << ' ' << StellarObjectArray[2].y << ' '
+      << StellarObjectArray[3].x << ' ' << StellarObjectArray[3].y << ' ' 
+      << StellarObjectArray[4].x << ' ' << StellarObjectArray[4].y << ' ' 
+      << r << ' ' << r1 << ' ' << r2 << '\n';
+    }
     while( j < numberOfObjects )
     {
       computeValues.sumForces(StellarObjectArray, numberOfObjects, j);
       j++;
     }
-    if( i % 1000000 == 0) cout << i <<  " Seconds" << '\n';
+    //***Radius from xNeptune to Sun****
+    r = computeValues.radius(StellarObjectArray[1].x, StellarObjectArray[1].y, 
+         StellarObjectArray[4].x, StellarObjectArray[4].y);
+    if( i == 0 ) rmin = r;
+    if( r < rmin ) rmin = r;
+    if( r < radiusLimit ) 
+    {
+      cout << "Collision " << r << ' ' << radiusLimit << ' ' << rmin << '\n';
+      exit (EXIT_FAILURE);
+    }
+    g = computeValues.Gc * StellarObjectArray[4].mass/(pow(r,2));
+
+    if( i % 1000000 == 0) cout << i <<  " Seconds and radius Earth and Sun: " << r << '\n';
+/*    if( r < 7.4052E11 )
+    {
+      cout << "Kill Process" << '\n';
+      k = 0;
+      while( k < numberOfObjects )
+      {
+        cout << k << ' ' << StellarObjectArray[k].name << ' ' << StellarObjectArray[k].mass << ' ' 
+        << StellarObjectArray[k].x << ' ' << StellarObjectArray[k].y << ' ' 
+        << StellarObjectArray[k].u << ' ' << StellarObjectArray[k].v << ' ' 
+        <<  '\n';
+        cout << '\n';
+        k++;
+      }
+      exit (EXIT_FAILURE);
+    } */
     i++;
    
   }
