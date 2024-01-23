@@ -127,7 +127,7 @@ int main(void)
   readFile.readDataFile(StellarObjectArray, size);
 
   ofstream out;
-  out.open ("/home/john/temp/2d2Object_cpp_output2-8em.txt");
+  out.open ("/home/jmajor/temp/2d2Object_cpp_output2-8em.txt");
   
   i = 0;
   while( i < numberOfObjects )
